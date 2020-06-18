@@ -1,0 +1,67 @@
+ Program
+   BeforeStart
+     t≔0.008
+     look_ahead≔0.2
+     gain≔100
+     samejoints≔0
+     start≔ False 
+     initdif≔d2r(1.5)
+     diffang≔[initdif,initdif,initdif,initdif,initdif,initdif]
+     newjoints≔[255.0,255.0,255.0,255.0,255.0,255.0]
+     mb_o_regfol≔[255.0,255.0,255.0,255.0,255.0,255.0]
+     mb_o_regown≔[255.0,255.0,255.0,255.0,255.0,255.0]
+     mb_o_regfol_rev≔[255.0,255.0,255.0,255.0,255.0,255.0]
+     sync()
+     Call get_master_q
+     'If the connection with the master it's right the vale is different from the initialized value'
+     If newjoints≠[255.0,255.0,255.0,255.0,255.0,255.0]
+       MoveJ
+         newjoints
+     Else
+       Popup: Can not connect with the master
+       Halt
+   Robot Program
+     'Moves the robot'
+     servoj(newjoints,t=t,lookahead_time=look_ahead,gain=gain)
+   Subproceso_1
+     Master joints
+       mb_o_regfol≔[j0,j1,j2,j3,j4,j5]
+       mb_o_regfol_rev≔[r0,r1,r2,r2,r4,r5]
+     Calc≔0
+     Loop Calc<6
+       mb_o_regfol[Calc]=mb_o_regfol[Calc]/1000
+       If mb_o_regfol_rev[Calc]≥1
+         mb_o_regfol[Calc]=-1*(6.283-mb_o_regfol[Calc])
+       diffang[Calc]=mb_o_regfol[Calc]-mb_o_regown[Calc]
+       'newjoints≔mb_o_regfol'
+       Calc≔Calc+1
+     newjoints≔mb_o_regfol
+     sync()
+   Thread_1
+     'Get my joint angles'
+     mb_o_regown≔get_actual_joint_positions()
+     'Get the master angles'
+     Call get_master_q
+     sync()
+   get_master_q
+     Master joints
+       'Joints of the master'
+       mb_o_regfol≔[j0,j1,j2,j3,j4,j5]
+       'Revolutions of the master'
+       mb_o_regfol_rev≔[r0,r1,r2,r2,r4,r5]
+     Calc≔0
+     'Having the joint values and the revolutions of the master, I compute the follower ones'
+     Loop Calc<6
+       'Convert the data from mm to meters'
+       mb_o_regfol[Calc]=mb_o_regfol[Calc]/1000
+       'Check the revolution sign'
+       If mb_o_regfol_rev[Calc]≥1
+         'If the revolution sign it's different from 0, modbus provides the complementary angle'
+         mb_o_regfol[Calc]=-1*(6.283-mb_o_regfol[Calc])
+       'Computes the difference of angle between the master and the follower'
+       diffang[Calc]=norm(mb_o_regfol[Calc]-mb_o_regown[Calc])
+       'Check if the difference it's greater than certain value, to avoid to be too sensible'
+       If diffang[Calc] ≥ initdif
+         newjoints[Calc] = mb_o_regfol[Calc]
+       Calc≔Calc+1
+     'newjoints≔mb_o_regfol'

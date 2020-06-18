@@ -1,0 +1,198 @@
+def followeroptTFM():
+  modbus_add_signal("127.0.0.1", 255, 270, 3, "j0", False)
+  modbus_set_signal_update_frequency("j0", 10)
+  modbus_add_signal("127.0.0.1", 255, 271, 3, "j1", False)
+  modbus_set_signal_update_frequency("j1", 10)
+  modbus_add_signal("127.0.0.1", 255, 272, 3, "j2", False)
+  modbus_set_signal_update_frequency("j2", 10)
+  modbus_add_signal("127.0.0.1", 255, 273, 3, "j3", False)
+  modbus_set_signal_update_frequency("j3", 10)
+  modbus_add_signal("127.0.0.1", 255, 274, 3, "j4", False)
+  modbus_set_signal_update_frequency("j4", 10)
+  modbus_add_signal("127.0.0.1", 255, 275, 3, "j5", False)
+  modbus_set_signal_update_frequency("j5", 10)
+  modbus_add_signal("127.0.0.1", 255, 320, 3, "r0", False)
+  modbus_set_signal_update_frequency("r0", 10)
+  modbus_add_signal("127.0.0.1", 255, 321, 3, "r1", False)
+  modbus_set_signal_update_frequency("r1", 10)
+  modbus_add_signal("127.0.0.1", 255, 322, 3, "r2", False)
+  modbus_set_signal_update_frequency("r2", 10)
+  modbus_add_signal("127.0.0.1", 255, 323, 3, "r3", False)
+  modbus_set_signal_update_frequency("r3", 10)
+  modbus_add_signal("127.0.0.1", 255, 324, 3, "r4", False)
+  modbus_set_signal_update_frequency("r4", 10)
+  modbus_add_signal("127.0.0.1", 255, 325, 3, "r5", False)
+  modbus_set_signal_update_frequency("r5", 10)
+  modbus_set_runstate_dependent_choice("j0",0)
+  modbus_set_runstate_dependent_choice("j1",0)
+  modbus_set_runstate_dependent_choice("j2",0)
+  modbus_set_runstate_dependent_choice("j3",0)
+  modbus_set_runstate_dependent_choice("j4",0)
+  modbus_set_runstate_dependent_choice("j5",0)
+  modbus_set_runstate_dependent_choice("r0",0)
+  modbus_set_runstate_dependent_choice("r1",0)
+  modbus_set_runstate_dependent_choice("r2",0)
+  modbus_set_runstate_dependent_choice("r3",0)
+  modbus_set_runstate_dependent_choice("r4",0)
+  modbus_set_runstate_dependent_choice("r5",0)
+  set_standard_analog_input_domain(0, 1)
+  set_standard_analog_input_domain(1, 1)
+  set_tool_analog_input_domain(0, 1)
+  set_tool_analog_input_domain(1, 1)
+  set_analog_outputdomain(0, 0)
+  set_analog_outputdomain(1, 0)
+  set_input_actions_to_default()
+  set_gravity([0.0, 0.0, 9.82])
+  set_safety_mode_transition_hardness(1)
+  step_count_2053d519_1abb_431a_bb8f_04b70e1541cd = 0
+  thread Step_Counter_Thread_fd937a2a_decf_4337_a863_ad683e69f33a():
+    while (True):
+      step_count_2053d519_1abb_431a_bb8f_04b70e1541cd = step_count_2053d519_1abb_431a_bb8f_04b70e1541cd + 1
+      sync()
+    end
+  end
+  run Step_Counter_Thread_fd937a2a_decf_4337_a863_ad683e69f33a()
+  set_tcp(p[0.0,0.0,0.0,0.0,0.0,0.0])
+  set_payload(0.0)
+  set_tool_voltage(0)
+  def get_master_q():
+    $ 45 "get_master_q" "noBreak"
+    $ 46 "Master joints"
+    $ 47 "'Joints of the master'"
+    # 'Joints of the master'
+    $ 48 "mb_o_regfol≔[j0,j1,j2,j3,j4,j5]"
+    global mb_o_regfol=[modbus_get_signal_status("j0"),modbus_get_signal_status("j1"),modbus_get_signal_status("j2"),modbus_get_signal_status("j3"),modbus_get_signal_status("j4"),modbus_get_signal_status("j5")]
+    $ 49 "'Revolutions of the master'"
+    # 'Revolutions of the master'
+    $ 50 "mb_o_regfol_rev≔[r0,r1,r2,r2,r4,r5]"
+    global mb_o_regfol_rev=[modbus_get_signal_status("r0"),modbus_get_signal_status("r1"),modbus_get_signal_status("r2"),modbus_get_signal_status("r2"),modbus_get_signal_status("r4"),modbus_get_signal_status("r5")]
+    $ 51 "Calc≔0"
+    global Calc=0
+    $ 52 "'Having the joint values and the revolutions of the master, I compute the follower ones'"
+    # 'Having the joint values and the revolutions of the master, I compute the follower ones'
+    $ 53 "Loop Calc<6"
+    while (Calc<6):
+      $ 54 "'Convert the data from mm to meters'"
+      # 'Convert the data from mm to meters'
+      $ 55 "mb_o_regfol[Calc]=mb_o_regfol[Calc]/1000"
+      mb_o_regfol[Calc]=mb_o_regfol[Calc]/1000
+      $ 56 "'Check the revolution sign'"
+      # 'Check the revolution sign'
+      $ 57 "If mb_o_regfol_rev[Calc]≥1"
+      if (mb_o_regfol_rev[Calc] >= 1):
+        $ 58 "'If the revolution sign it's different from 0, modbus provides the complementary angle'"
+        # 'If the revolution sign it's different from 0, modbus provides the complementary angle'
+        $ 59 "mb_o_regfol[Calc]=-1*(6.283-mb_o_regfol[Calc])"
+        mb_o_regfol[Calc]=-1*(6.283-mb_o_regfol[Calc])
+      end
+      $ 60 "'Computes the difference of angle between the master and the follower'"
+      # 'Computes the difference of angle between the master and the follower'
+      $ 61 "diffang[Calc]=norm(mb_o_regfol[Calc]-mb_o_regown[Calc])"
+      diffang[Calc]=norm(mb_o_regfol[Calc]-mb_o_regown[Calc])
+      $ 62 "'Check if the difference it's greater than certain value, to avoid to be too sensible'"
+      # 'Check if the difference it's greater than certain value, to avoid to be too sensible'
+      $ 63 "If diffang[Calc] ≥ initdif"
+      if (diffang[Calc]  >=  initdif):
+        $ 64 "newjoints[Calc] = mb_o_regfol[Calc]"
+        newjoints[Calc] = mb_o_regfol[Calc]
+      end
+      $ 65 "Calc≔Calc+1"
+      global Calc=Calc+1
+    end
+  end
+  $ 1 "BeforeStart"
+  $ 2 "t≔0.008"
+  global t=0.008
+  $ 3 "look_ahead≔0.2"
+  global look_ahead=0.2
+  $ 4 "gain≔100"
+  global gain=100
+  $ 5 "samejoints≔0"
+  global samejoints=0
+  $ 6 "start≔ False "
+  global start=  False  
+  $ 7 "initdif≔d2r(1.5)"
+  global initdif= d2r (1.5)
+  $ 8 "diffang≔[initdif,initdif,initdif,initdif,initdif,initdif]"
+  global diffang=[initdif,initdif,initdif,initdif,initdif,initdif]
+  $ 9 "newjoints≔[255.0,255.0,255.0,255.0,255.0,255.0]"
+  global newjoints=[255.0,255.0,255.0,255.0,255.0,255.0]
+  $ 10 "mb_o_regfol≔[255.0,255.0,255.0,255.0,255.0,255.0]"
+  global mb_o_regfol=[255.0,255.0,255.0,255.0,255.0,255.0]
+  $ 11 "mb_o_regown≔[255.0,255.0,255.0,255.0,255.0,255.0]"
+  global mb_o_regown=[255.0,255.0,255.0,255.0,255.0,255.0]
+  $ 12 "mb_o_regfol_rev≔[255.0,255.0,255.0,255.0,255.0,255.0]"
+  global mb_o_regfol_rev=[255.0,255.0,255.0,255.0,255.0,255.0]
+  $ 13 "sync()"
+  sync()
+  $ 14 "Call get_master_q"
+  get_master_q()
+  $ 15 "'If the connection with the master it's right the vale is different from the initialized value'"
+  # 'If the connection with the master it's right the vale is different from the initialized value'
+  $ 16 "If newjoints≠[255.0,255.0,255.0,255.0,255.0,255.0]"
+  if (newjoints != [255.0,255.0,255.0,255.0,255.0,255.0]):
+    $ 17 "MoveJ"
+    $ 18 "newjoints" "breakAfter"
+    movej(newjoints, a=1.3962634015954636, v=1.0471975511965976)
+  else:
+    $ 19 "Else" "noBreak"
+    $ 20 "Popup: Can not connect with the master"
+    popup("Can not connect with the master", "Message", False, False, blocking=True)
+    $ 21 "Halt"
+    halt
+  end
+  $ 25 "Subproceso_1"
+  thread Subproceso_1():
+    while (True):
+      $ 26 "Master joints"
+      $ 27 "mb_o_regfol≔[j0,j1,j2,j3,j4,j5]"
+      global mb_o_regfol=[modbus_get_signal_status("j0"),modbus_get_signal_status("j1"),modbus_get_signal_status("j2"),modbus_get_signal_status("j3"),modbus_get_signal_status("j4"),modbus_get_signal_status("j5")]
+      $ 28 "mb_o_regfol_rev≔[r0,r1,r2,r2,r4,r5]"
+      global mb_o_regfol_rev=[modbus_get_signal_status("r0"),modbus_get_signal_status("r1"),modbus_get_signal_status("r2"),modbus_get_signal_status("r2"),modbus_get_signal_status("r4"),modbus_get_signal_status("r5")]
+      $ 29 "Calc≔0"
+      global Calc=0
+      $ 30 "Loop Calc<6"
+      while (Calc<6):
+        $ 31 "mb_o_regfol[Calc]=mb_o_regfol[Calc]/1000"
+        mb_o_regfol[Calc]=mb_o_regfol[Calc]/1000
+        $ 32 "If mb_o_regfol_rev[Calc]≥1"
+        if (mb_o_regfol_rev[Calc] >= 1):
+          $ 33 "mb_o_regfol[Calc]=-1*(6.283-mb_o_regfol[Calc])"
+          mb_o_regfol[Calc]=-1*(6.283-mb_o_regfol[Calc])
+        end
+        $ 34 "diffang[Calc]=mb_o_regfol[Calc]-mb_o_regown[Calc]"
+        diffang[Calc]=mb_o_regfol[Calc]-mb_o_regown[Calc]
+        $ 36 "Calc≔Calc+1"
+        global Calc=Calc+1
+      end
+      $ 37 "newjoints≔mb_o_regfol"
+      global newjoints=mb_o_regfol
+      $ 38 "sync()"
+      sync()
+    end
+  end
+  threadId_Subproceso_1 = run Subproceso_1()
+  $ 39 "Thread_1"
+  thread Thread_1():
+    while (True):
+      $ 40 "'Get my joint angles'"
+      # 'Get my joint angles'
+      $ 41 "mb_o_regown≔get_actual_joint_positions()"
+      global mb_o_regown= get_actual_joint_positions ()
+      $ 42 "'Get the master angles'"
+      # 'Get the master angles'
+      $ 43 "Call get_master_q"
+      get_master_q()
+      $ 44 "sync()"
+      sync()
+    end
+  end
+  threadId_Thread_1 = run Thread_1()
+  while (True):
+    $ 22 "Robot Program"
+    $ 23 "'Moves the robot'"
+    # 'Moves the robot'
+    $ 24 "servoj(newjoints,t=t,lookahead_time=look_ahead,gain=gain)"
+    servoj(newjoints,t=t,lookahead_time=look_ahead,gain=gain)
+  end
+end
